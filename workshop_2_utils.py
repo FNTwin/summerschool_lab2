@@ -299,6 +299,19 @@ def init_df_fields(df):
     df_tmp["sampled"] = 0
     return df_tmp
 
+def format_df(df, affinities, sampled_idxs, iteration):
+    df["true_affinity"][sampled_idxs]=affinities
+    df["sampled"][sampled_idxs]=iteration
+    return df
+
+def get_results(output_dir, idxs):
+    values=[]
+    key="minimizedAffinity"
+    for idx in idxs:
+        poses= dm.read_sdf(os.path.join(output_dir, f"poses_{idx}.sdf"), as_df=True, mol_column="mols", n_jobs=-1, sanitize=False)
+        poses=poses.sort_values("minimizedAffinity",inplace=False)
+        values.append(poses["minimizedAffinity"][0])
+    return values
 
 def train_gp(df) -> GaussianProcessRegressor:
     from sklearn.gaussian_process.kernels import RBF
@@ -336,15 +349,3 @@ def plot_AL(df, to : int=3):
         datum["mols"].append(mols)
         datum["it"].append(iteration)
     return pd.DataFrame(datum)
-
-
-class Oracle:
-    def __init__(self, docker):
-        self._docker=docker 
-        
-    @property
-    def docker(self):
-        return docker 
-    
-    def __call__(self, idxs):
-        pass 
